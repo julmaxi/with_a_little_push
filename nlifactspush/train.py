@@ -38,9 +38,12 @@ def main():
     aug_str = "all"
     if args.augmentations is not None:
         aug_str = "+".join(args.augmentations)
-    
-    if args.augmentations is not None:
         dataset = dataset.filter(lambda x: x["augment_type"] in args.augmentations)
+
+    if args.sample is not None:
+        aug_str += f"_sample-{args.sample}"
+        dataset = dataset.filter(lambda x: x["sample_idx"] in (0, args.sample))
+
 
     if args.sample_phrases:
         all_phrase_indices = set()
