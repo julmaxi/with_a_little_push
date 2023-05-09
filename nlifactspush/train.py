@@ -8,6 +8,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trai
 import datasets
 import random
 import os
+import tqdm
 
 from datetime import datetime
 
@@ -23,6 +24,7 @@ def main():
     parser.add_argument("-s", "--steps", default=20000, type=int, help="Number of training steps")
     parser.add_argument("--sample", default=None, type=int, help="Sample index to train on")
     parser.add_argument("--sample-phrases", default=False, action="store_true")
+    parser.add_argument("--ablate-aug-type", default=None, type=lambda x: x.split(","))
 
     args = parser.parse_args()
 
@@ -43,11 +45,11 @@ def main():
     if args.sample is not None:
         aug_str += f"_sample-{args.sample}"
         dataset = dataset.filter(lambda x: x["sample_idx"] in (0, args.sample))
-
-
+    
+    print("Dataset size:", len(dataset))
     if args.sample_phrases:
         all_phrase_indices = set()
-        for entry in dataset["train"]:
+        for entry in tqdm.tqdm(dataset["train"]):
             if entry["augment_type"] == "dialog":
                 all_phrase_indices.add(entry["phrase_idx"])
 
@@ -56,6 +58,14 @@ def main():
         aug_str += "_sampled"
 
         dataset = dataset.filter(lambda x: x["augment_type"] != "dialog" or x["phrase_idx"] in sampled_phrase_indices)
+        print(">", len(dataset))
+    print("Dataset after phrase sampling:", len(dataset))
+
+    if args.ablate_aug_type is not None:
+        aug_str += "_ablate-" + "+".join(args.ablate_aug_type)
+        dataset = dataset.filter(lambda x: x["augment_type"] != "dialog" or x["phrase_type"] not in args.ablate_aug_type)
+
+    print("Dataset after ablation:", len(dataset))
 
     dataset = dataset.map(preprocess, batched=False, remove_columns=list(dataset["train"].features))
     collator = DataCollatorWithPadding(tokenizer=tokenizer)
