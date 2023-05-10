@@ -42,7 +42,9 @@ def main():
     all_out_keys = set()
 
     for key, score in all_scores.items():
-        avg, out = compute_roc_aucs(score["scores"], score["label"], score["corpus"])
+        #scores = score["prediction"].map(lambda x: eval(x)[0])
+        scores = score["scores"]
+        avg, out = compute_roc_aucs(scores, score["label"], score["corpus"])
         all_out_keys.update(out)
         all_results[key] = (avg, out)
 

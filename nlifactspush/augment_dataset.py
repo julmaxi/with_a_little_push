@@ -80,7 +80,7 @@ def augment_dataset(dataset: datasets.arrow_dataset.Dataset, ratio=1):
 
     return datasets.concatenate_datasets([
         dataset.map(
-            lambda x: f(x, n_samples=5),
+            lambda x: f(x, n_samples=1),
             batched=True,
             load_from_cache_file=False,
         ) for f in augment_functions

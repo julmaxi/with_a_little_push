@@ -47,6 +47,18 @@ def get_predictions_multisample(model, tokenizer, dataset, device, n_samples=10)
     return np.array(out)
 
 
+def make_dropout_func(do_rate):
+    def f(x):
+        mask = (torch.rand_like(x) < do_rate)
+        return x.masked_fill(mask, 0.0) * (1.0 / (1 - do_rate))
+    return f
+
+def enable_dropout(module):
+    for c in module.children():
+        if c.__class__.__name__ == "StableDropout":
+            if c.drop_prob > 0:
+                c.forward = make_dropout_func(c.drop_prob)
+        enable_dropout(c)
 
 def compute_roc_aucs(predictions, labels, corpora):
     instances_by_corpus = defaultdict(lambda: ([], []))
@@ -146,10 +158,14 @@ def main():
     parser = argparse.ArgumentParser()
     PreparedDataset.add_default_args(parser)
     parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c")
+    parser.add_argument("--mc", target="enable_dropout", action="store_true", default=False)
     args = parser.parse_args()
     dataset = PreparedDataset.from_args(args)
 
-    predictions = get_predictions(dataset.model, dataset.tokenizer, dataset.dataset, "cuda")
+    if args.enable_dropout:
+        predictions = get_predictions_multisample(dataset.model, dataset.tokenizer, dataset.dataset, "cuda")
+    else:
+        predictions = get_predictions(dataset.model, dataset.tokenizer, dataset.dataset, "cuda")
 
     if args.mode == "e-c":
         scores = predictions[:,0] - predictions[:,2]
@@ -162,6 +178,8 @@ def main():
     out_dir.mkdir(exist_ok=True)
 
     model_basename = args.model.rstrip("/").rsplit("/", 1)[-1]
+    if args.enable_dropout:
+        model_basename += "_mc"
     with open(out_dir / model_basename, "w") as f:
         pd.DataFrame({"prediction": predictions.tolist(), "scores": scores, "label": dataset.labels, "corpus": dataset.corpora}).to_csv(f, index=False)
 
