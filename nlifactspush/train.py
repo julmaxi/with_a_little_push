@@ -44,7 +44,10 @@ def main():
         out_dict["label"] = entry["label"]
         return out_dict
     
+    aug_str = "all"
+
     if args.sample_phrases:
+        aug_str += "_resample"
         phrases = random.sample(PHRASES, 5)
         dataset = {key: augment_dataset(d, phrases=phrases) for key, d in dataset.items()}
 
@@ -62,9 +65,6 @@ def main():
             }
         )
 
-
-
-    aug_str = "all"
     if args.augmentations is not None:
         aug_str = "+".join(args.augmentations)
         dataset = dataset.filter(lambda x: x["augment_type"] in args.augmentations)
