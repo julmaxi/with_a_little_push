@@ -12,6 +12,8 @@ import tqdm
 
 from datetime import datetime
 
+from .augment_dataset import augment_dataset, PHRASES
+
 
 
 def main():
@@ -24,11 +26,16 @@ def main():
     parser.add_argument("-s", "--steps", default=20000, type=int, help="Number of training steps")
     parser.add_argument("--sample", default=None, type=int, help="Sample index to train on")
     parser.add_argument("--sample-phrases", default=False, action="store_true")
-    parser.add_argument("--ablate-aug-type", default=None, type=lambda x: x.split(","))
+    #parser.add_argument("--ablate-aug-type", default=None, type=lambda x: x.split(","))
 
     args = parser.parse_args()
 
-    dataset = datasets.load_from_disk(args.dataset)
+    if os.path.exists(args.dataset):
+        dataset = datasets.load_from_disk(args.dataset)
+    else:
+        dataset = datasets.load_dataset(args.dataset)
+
+    print("Dataset at start:", sum(len(dataset[k]) for k in dataset if k.startswith("train")))
 
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
 
@@ -36,6 +43,26 @@ def main():
         out_dict = tokenizer(entry["premise"], entry["hypothesis"], truncation=True, max_length=512)
         out_dict["label"] = entry["label"]
         return out_dict
+    
+    if args.sample_phrases:
+        phrases = random.sample(PHRASES, 5)
+        dataset = {key: augment_dataset(d, phrases=phrases) for key, d in dataset.items()}
+
+        dataset = datasets.dataset_dict.DatasetDict(
+            {
+                "train": datasets.concatenate_datasets(
+                    [dataset["train_r1"], dataset["train_r2"], dataset["train_r3"]]
+                ),
+                "dev": datasets.concatenate_datasets(
+                    [dataset["dev_r1"], dataset["dev_r2"], dataset["dev_r3"]]
+                ),
+                "test": datasets.concatenate_datasets(
+                    [dataset["test_r1"], dataset["test_r2"], dataset["test_r3"]]
+                )
+            }
+        )
+
+
 
     aug_str = "all"
     if args.augmentations is not None:
@@ -46,26 +73,7 @@ def main():
         aug_str += f"_sample-{args.sample}"
         dataset = dataset.filter(lambda x: x["sample_idx"] in (0, args.sample))
     
-    print("Dataset size:", len(dataset))
-    if args.sample_phrases:
-        all_phrase_indices = set()
-        for entry in tqdm.tqdm(dataset["train"]):
-            if entry["augment_type"] == "dialog":
-                all_phrase_indices.add(entry["phrase_idx"])
-
-        sampled_phrase_indices = random.sample(list(all_phrase_indices), len(all_phrase_indices) // 2)
-
-        aug_str += "_sampled"
-
-        dataset = dataset.filter(lambda x: x["augment_type"] != "dialog" or x["phrase_idx"] in sampled_phrase_indices)
-        print(">", len(dataset))
-    print("Dataset after phrase sampling:", len(dataset))
-
-    if args.ablate_aug_type is not None:
-        aug_str += "_ablate-" + "+".join(args.ablate_aug_type)
-        dataset = dataset.filter(lambda x: x["augment_type"] != "dialog" or x["phrase_type"] not in args.ablate_aug_type)
-
-    print("Dataset after ablation:", len(dataset))
+    print("Dataset after ablation:", len(dataset["train"]))
 
     dataset = dataset.map(preprocess, batched=False, remove_columns=list(dataset["train"].features))
     collator = DataCollatorWithPadding(tokenizer=tokenizer)

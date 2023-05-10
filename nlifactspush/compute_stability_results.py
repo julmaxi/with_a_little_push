@@ -42,8 +42,8 @@ def main():
     all_results = defaultdict(list)
 
     for score in all_scores:
-        #scores = score["prediction"].map(lambda x: eval(x)[0])
-        scores = score["scores"]
+        scores = score["prediction"].map(lambda x: eval(x)[0])
+        #scores = score["scores"]
         avg, out = compute_roc_aucs(scores, score["label"], score["corpus"])
         for k, v in out.items():
             all_results[k].append(v)

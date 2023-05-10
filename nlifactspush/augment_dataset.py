@@ -30,24 +30,26 @@ def batched_instance_fn(f: Callable[
     return inner
 
 
-def augment_dataset(dataset: datasets.arrow_dataset.Dataset, ratio=1):
-    PHRASES = list(enumerate([
-        ("I am not sure, but ", "hedging"),
-        ("I am not sure but I do know that ", "hedging"),
-        ("I believe ",  "hedging"),
-        ("I do not have information on this but ", "hedging"),
-        ("I think ", "hedging"),
-        ("Here is what I know: ", "introduction"),
-        ("yep. Also ", "introduction"),
-        ("Sure! Here is what I know: ", "introduction"),
-        ("I love that! ", "opinion"),
-        ("I like that! ", "opinion")
-    ]))
+PHRASES = list(enumerate([
+    ("I am not sure, but ", "hedging"),
+    ("I am not sure but I do know that ", "hedging"),
+    ("I believe ",  "hedging"),
+    ("I do not have information on this but ", "hedging"),
+    ("I think ", "hedging"),
+    ("Here is what I know: ", "introduction"),
+    ("yep. Also ", "introduction"),
+    ("Sure! Here is what I know: ", "introduction"),
+    ("I love that! ", "opinion"),
+    ("I like that! ", "opinion")
+]))
+
+
+def augment_dataset(dataset: datasets.arrow_dataset.Dataset, phrases=PHRASES, ratio=1):
     
     @batched_instance_fn
     def phrase_augment_fn(instance: dict[str, Any], n_samples=1) -> dict[str, Any]:
         hypothesis = instance["hypothesis"]
-        confounders = random.sample(PHRASES, k=n_samples)
+        confounders = random.sample(phrases, k=n_samples)
 
         result = []
 
