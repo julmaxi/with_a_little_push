@@ -158,7 +158,7 @@ def main():
     parser = argparse.ArgumentParser()
     PreparedDataset.add_default_args(parser)
     parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c")
-    parser.add_argument("--mc", target="enable_dropout", action="store_true", default=False)
+    parser.add_argument("--mc", dest="enable_dropout", action="store_true", default=False)
     args = parser.parse_args()
     dataset = PreparedDataset.from_args(args)
 
