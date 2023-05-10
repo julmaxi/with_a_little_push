@@ -23,7 +23,7 @@ def main():
     parser.add_argument("-r", "--report", dest="report", default=False, action="store_true")
     parser.add_argument("--lr", dest="learning_rate", default=5e-06, type=float)
     parser.add_argument("--aug", dest="augmentations", default=None, type=lambda x: x.split(","))
-    parser.add_argument("-s", "--steps", default=20000, type=int, help="Number of training steps")
+    parser.add_argument("-s", "--steps", default=10000, type=int, help="Number of training steps")
     parser.add_argument("--sample", default=None, type=int, help="Sample index to train on")
     parser.add_argument("--sample-phrases", default=False, action="store_true")
     #parser.add_argument("--ablate-aug-type", default=None, type=lambda x: x.split(","))
