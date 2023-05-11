@@ -163,6 +163,7 @@ def main():
     dataset = PreparedDataset.from_args(args)
 
     if args.enable_dropout:
+        enable_dropout(dataset.model)
         predictions = get_predictions_multisample(dataset.model, dataset.tokenizer, dataset.dataset, "cuda")
     else:
         predictions = get_predictions(dataset.model, dataset.tokenizer, dataset.dataset, "cuda")
