@@ -102,11 +102,11 @@ def main():
         report_to="wandb" if args.report else "none",
         save_strategy="steps",
         save_total_limit=10,
-        save_steps=5000,
+        save_steps=1000,
         logging_strategy="steps",
         logging_steps=100,
         evaluation_strategy="steps",
-        eval_steps=5000,
+        eval_steps=1000,
         load_best_model_at_end=True
     )
 
