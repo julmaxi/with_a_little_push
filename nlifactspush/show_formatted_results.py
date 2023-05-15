@@ -29,7 +29,8 @@ def print_table(table):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("score_files", nargs="+", type=Path)
-
+    parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c")
+    
     args = parser.parse_args()
 
     all_scores = {}
@@ -43,8 +44,11 @@ def main():
 
     for key, score in all_scores.items():
         scores = score["prediction"].map(lambda x: eval(x))
-        scores = scores.map(lambda x: x[0])
-        #scores = score["scores"]
+        if args.mode == "e":
+            scores = scores.map(lambda x: x[0])
+        elif args.mode == "e-c":
+            scores = scores.map(lambda x: x[0] - x[2])
+
         avg, out = compute_roc_aucs(scores, score["label"], score["corpus"])
         all_out_keys.update(out)
         all_results[key] = (avg, out)
