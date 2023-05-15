@@ -26,6 +26,7 @@ def main():
     parser.add_argument("-s", "--steps", default=10000, type=int, help="Number of training steps")
     parser.add_argument("--sample", default=None, type=int, help="Sample index to train on")
     parser.add_argument("--sample-phrases", default=False, action="store_true")
+    parser.add_argument("--select-phrases", default=None, type=lambda x: list(map(int, x.split(","))))
     #parser.add_argument("--ablate-aug-type", default=None, type=lambda x: x.split(","))
 
     args = parser.parse_args()
@@ -49,6 +50,25 @@ def main():
     if args.sample_phrases:
         aug_str += "_resample"
         phrases = random.sample(PHRASES, 5)
+        dataset = {key: augment_dataset(d, phrases=phrases) for key, d in dataset.items()}
+
+        dataset = datasets.dataset_dict.DatasetDict(
+            {
+                "train": datasets.concatenate_datasets(
+                    [dataset["train_r1"], dataset["train_r2"], dataset["train_r3"]]
+                ),
+                "dev": datasets.concatenate_datasets(
+                    [dataset["dev_r1"], dataset["dev_r2"], dataset["dev_r3"]]
+                ),
+                "test": datasets.concatenate_datasets(
+                    [dataset["test_r1"], dataset["test_r2"], dataset["test_r3"]]
+                )
+            }
+        )
+
+    if args.select_phrases:
+        aug_str += "_select" + "-".join(map(str, args.select_phrases))
+        phrases = [PHRASES[i] for i in args.select_phrases]
         dataset = {key: augment_dataset(d, phrases=phrases) for key, d in dataset.items()}
 
         dataset = datasets.dataset_dict.DatasetDict(
