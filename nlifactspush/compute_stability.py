@@ -55,7 +55,7 @@ def main():
         all_results["__AVG__"].append(avg)
     
     for k, v in sorted(all_results.items()):
-        print(f"{k}:\t{np.std(v) * 100.0:.1f}\t{sum(v) / len(v) * 100.0:.1f}\t{min(v) * 100.0:.1f}\t{max(v) * 100.0:.1f}")
+        print(f"{k}:\t{sum(v) / len(v) * 100.0:.1f}\t{np.std(v) * 100.0:.1f}\t{min(v) * 100.0:.1f}\t{max(v) * 100.0:.1f}")
 
 
 if __name__ == "__main__":
