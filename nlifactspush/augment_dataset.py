@@ -25,6 +25,7 @@ def batched_instance_fn(f: Callable[
             for out in out_dicts:
                 for k in new_keys:
                     out_dict[k].append(out[k])
+        print([(k, len(v)) for k, v in out_dict.items()])
         return out_dict
 
     return inner
