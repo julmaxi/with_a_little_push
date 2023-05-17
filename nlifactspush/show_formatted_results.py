@@ -34,11 +34,11 @@ def main():
     args = parser.parse_args()
 
     all_scores = {}
-    for score_file in args.score_files:
+    for idx, score_file in enumerate(args.score_files):
         score_df = pd.read_csv(score_file)
-        all_scores[fname_to_header(score_file.name)] = score_df
+        all_scores[str(idx) + ": " + fname_to_header(score_file.name)] = score_df
     
-    all_result_items = []
+    all_results = {}
 
     all_out_keys = set()
 
@@ -51,7 +51,7 @@ def main():
 
         avg, out = compute_roc_aucs(scores, score["label"], score["corpus"])
         all_out_keys.update(out)
-        all_result_items.append(key, (avg, out))
+        all_results[key] = (avg, out)
 
 
     all_result_items = sorted(all_results.items())
