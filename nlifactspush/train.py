@@ -69,6 +69,7 @@ def main():
     if args.select_phrases:
         aug_str += "_select" + "-".join(map(str, args.select_phrases))
         phrases = [PHRASES[i] for i in args.select_phrases]
+        print(phrases)
         dataset = {key: augment_dataset(d, phrases=phrases) for key, d in dataset.items()}
 
         dataset = datasets.dataset_dict.DatasetDict(
