@@ -1,4 +1,4 @@
-# Code for the 2023 ACL Short Paper "With a Little Push, NLI Models _can_ Robustly and Efficiently Predict Faithfulness
+# Code for the 2023 ACL Short Paper "With a Little Push, NLI Models _can_ Robustly and Efficiently Predict Faithfulness"
 
 ## Paper
 
