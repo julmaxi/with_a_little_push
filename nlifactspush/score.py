@@ -29,7 +29,7 @@ def get_predictions(model, tokenizer, dataset, device):
 
     return np.array(out)
 
-def get_predictions_multisample(model, tokenizer, dataset, device, n_samples=10):
+def get_predictions_multisample(model, tokenizer, dataset, device, n_samples=15):
     collator = DataCollatorWithPadding(tokenizer=tokenizer)
     loader = DataLoader(dataset, 1, shuffle=False, collate_fn=collator)
     out = []
@@ -83,8 +83,8 @@ class PreparedModel:
 
     @staticmethod
     def add_default_args(parser):
-        parser.add_argument("--model", type=str, required=True)
-        parser.add_argument("--tokenizer", type=str, default="microsoft/deberta-v3-large")
+        parser.add_argument("--model", type=str, required=True, default="juliussteen/DeBERTa-v3-FaithAug", help="Hub model name or path to the model")
+        parser.add_argument("--tokenizer", type=str, default="microsoft/deberta-v3-large", help="Hub tokenizer name or path to the tokenizer")
 
     @classmethod
     def from_args(cls, args):
@@ -125,7 +125,7 @@ class PreparedDataset:
     @staticmethod
     def add_default_args(parser):
         PreparedModel.add_default_args(parser)
-        parser.add_argument("--dataset", type=Path, default="true.json")
+        parser.add_argument("--dataset", type=Path, default="true.json", help="Path to the dataset to score")
 
     @classmethod
     def from_args(cls, args):
@@ -155,10 +155,11 @@ class PreparedDataset:
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(help="Score a dataset for faithfulness using a NLI model")
     PreparedDataset.add_default_args(parser)
-    parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c")
-    parser.add_argument("--mc", dest="enable_dropout", action="store_true", default=False)
+    parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c", help="Scoring mode. e: entailment, e-c: entailment - contradiction")
+    parser.add_argument("--mc", dest="enable_dropout", action="store_true", default=False, help="Enable Monte Carlo dropout")
+    parser.add_argument("-o", dest="out_file", type=str, default=None, help="Score file")
     args = parser.parse_args()
     dataset = PreparedDataset.from_args(args)
 
@@ -173,15 +174,19 @@ def main():
     else:
         scores = predictions[:,0]
 
-    dataset_name = args.dataset.name.rsplit(".", 1)[0]
+    if args.out_file:
+        out_path = Path(args.out_file)
+    else:
+        dataset_name = args.dataset.name.rsplit(".", 1)[0]
+        out_dir = Path(f"predicted_scores_{dataset_name}")
+        out_dir.mkdir(exist_ok=True)
 
-    out_dir = Path(f"predicted_scores_{dataset_name}")
-    out_dir.mkdir(exist_ok=True)
-
-    model_basename = args.model.rstrip("/").rsplit("/", 1)[-1]
-    if args.enable_dropout:
-        model_basename += "_mc"
-    with open(out_dir / model_basename, "w") as f:
+        model_basename = args.model.rstrip("/").rsplit("/", 1)[-1]
+        if args.enable_dropout:
+            model_basename += "_mc"
+        
+        out_path = out_dir / model_basename
+    with open(out_path, "w") as f:
         pd.DataFrame({"prediction": predictions.tolist(), "scores": scores, "label": dataset.labels, "corpus": dataset.corpora}).to_csv(f, index=False)
 
     avg, out = compute_roc_aucs(scores, dataset.labels, dataset.corpora)
