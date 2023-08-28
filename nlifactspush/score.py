@@ -155,7 +155,7 @@ class PreparedDataset:
 
 
 def main():
-    parser = argparse.ArgumentParser(help="Score a dataset for faithfulness using a NLI model")
+    parser = argparse.ArgumentParser(usage="Score a dataset for faithfulness using a NLI model")
     PreparedDataset.add_default_args(parser)
     parser.add_argument("-m", "--mode", choices=["e", "e-c"], default="e-c", help="Scoring mode. e: entailment, e-c: entailment - contradiction")
     parser.add_argument("--mc", dest="enable_dropout", action="store_true", default=False, help="Enable Monte Carlo dropout")
